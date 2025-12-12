@@ -3,8 +3,9 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.regularizers import l2
 from keras.layers import (Dense, Dropout, Activation, Flatten, BatchNormalization, Conv2D, MaxPooling2D)
-from keras.optimizers import AdamW
+from tensorflow_addons.optimizers import AdamW
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from keras.losses import CategoricalCrossentropy
 
 num_classes = 7
 img_rows, img_cols = 48, 48
@@ -15,16 +16,11 @@ validation_data_dir = r'C:\XLAS\DoAn\XLAS_Project\dataset_new\valid'
 
 train_datagen = ImageDataGenerator(
     rescale=1./255,
-    samplewise_center=True,
-    samplewise_std_normalization=True,
-    rotation_range=30,
-    shear_range=0.3,
-    zoom_range=0.3,
-    width_shift_range=0.4,
-    height_shift_range=0.4,
-    horizontal_flip=True,
-    brightness_range=[0.8, 1.2],
-    channel_shift_range=10.0
+    rotation_range=15,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    zoom_range=0.1,
+    horizontal_flip=True
 )
 
 validation_datagen = ImageDataGenerator(rescale=1./255)
@@ -51,82 +47,79 @@ print("Train classes:", train_generator.class_indices)
 print("Valid classes:", validation_generator.class_indices)
 
 
-# Model — CNN
 model = Sequential()
 
 # Block-1
-model.add(Conv2D(32, (3,3), padding='same', kernel_initializer='he_normal', input_shape=(img_rows, img_cols, 1)))
+model.add(Conv2D(32, (3,3), padding='same', kernel_initializer='he_normal', kernel_regularizer=l2(1e-4), input_shape=(img_rows, img_cols, 1)))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
 model.add(Conv2D(32, (3,3), padding='same', kernel_initializer='he_normal'))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(MaxPooling2D((2,2)))
 model.add(Dropout(0.2))
 
 
 # Block-2
-model.add(Conv2D(64, (3,3), padding='same', kernel_initializer='he_normal'))
+model.add(Conv2D(64, (3,3), padding='same', kernel_initializer='he_normal', kernel_regularizer=l2(1e-4)))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
 model.add(Conv2D(64, (3,3), padding='same', kernel_initializer='he_normal'))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(MaxPooling2D((2,2)))
 model.add(Dropout(0.2))
 
 
 # Block-3
-model.add(Conv2D(128, (3,3), padding='same', kernel_initializer='he_normal'))
+model.add(Conv2D(128, (3,3), padding='same', kernel_initializer='he_normal', kernel_regularizer=l2(1e-4)))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
 model.add(Conv2D(128, (3,3), padding='same', kernel_initializer='he_normal'))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(MaxPooling2D((2,2)))
 model.add(Dropout(0.2))
 
 
 # Block-4
-model.add(Conv2D(256, (3,3), padding='same', kernel_initializer='he_normal'))
+model.add(Conv2D(256, (3,3), padding='same', kernel_initializer='he_normal', kernel_regularizer=l2(1e-4)))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
 model.add(Conv2D(256, (3,3), padding='same', kernel_initializer='he_normal'))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
-model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(MaxPooling2D((2,2)))
 model.add(Dropout(0.2))
 
 
 # Block-5
 model.add(Flatten())
-model.add(Dense(64, kernel_initializer='he_normal'))
+model.add(Dense(128, kernel_initializer='he_normal'))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
-model.add(Dropout(0.6))
+model.add(Dropout(0.4))
 
 # Block-6
-model.add(Dense(64, kernel_initializer='he_normal'))
+model.add(Dense(128, kernel_initializer='he_normal'))
 model.add(Activation('elu'))
 model.add(BatchNormalization())
-model.add(Dropout(0.6))
+model.add(Dropout(0.4))
 
 # Block-7
 model.add(Dense(num_classes, kernel_initializer='he_normal'))
 model.add(Activation('softmax'))
 
 
-# COMPILE
 model.compile(
-    loss='categorical_crossentropy',
-    optimizer=AdamW(learning_rate=0.0001, weight_decay=1e-4),
+    loss=CategoricalCrossentropy(label_smoothing=0.1),
+    optimizer=AdamW(learning_rate=3e-4, weight_decay=1e-5),
     metrics=['accuracy']
 )
 
 print(model.summary())
 
 
-# CALLBACKS
 checkpoint = ModelCheckpoint(
     r'C:\XLAS\DoAn\XLAS_Project\Emotion_little_vgg.h5',
     monitor='val_loss',
@@ -145,7 +138,7 @@ earlystop = EarlyStopping(
 reduce_lr = ReduceLROnPlateau(
     monitor='val_loss',
     factor=0.5,
-    patience=2,
+    patience=3,
     min_delta=0.0001,
     verbose=1
 )
