@@ -1,13 +1,14 @@
 import cv2
 import numpy as np
 from keras.models import load_model
+import tensorflow_addons as tfa
 
 model = load_model(r'C:\XLAS\DoAn\XLAS_Project\Emotion_little_vgg.h5')
 face_detect = cv2.CascadeClassifier(r'C:\XLAS\DoAn\XLAS_Project\haarcascade_frontalface_default.xml')
 
 emotion_labels = ["Angry", "Disgust", "Fear", "Happy", "Neutral", "Sad", "Surprise"]
 
-frame = cv2.imread(r"C:\XLAS\DoAn\XLAS_Project\emotion_1.jpg")
+frame = cv2.imread(r"C:\XLAS\DoAn\XLAS_Project\emotion_.jpg")
 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 faces = face_detect.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 

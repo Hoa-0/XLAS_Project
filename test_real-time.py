@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from keras.models import load_model
+import tensorflow_addons as tfa
 
 model = load_model(r"C:\XLAS\DoAn\XLAS_Project\Emotion_little_vgg.h5")
 face_detect = cv2.CascadeClassifier(r"C:\XLAS\DoAn\XLAS_Project\haarcascade_frontalface_default.xml")
