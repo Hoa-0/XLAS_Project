@@ -3,7 +3,6 @@ import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 from sklearn.metrics import classification_report, confusion_matrix
-# Nếu bạn dùng AdamW hoặc thư viện mở rộng, có thể cần dòng này:
 # import tensorflow_addons as tfa 
 
 # ===============================
@@ -12,7 +11,6 @@ from sklearn.metrics import classification_report, confusion_matrix
 model_path = r"C:\Users\PC\Downloads\XLAS_Project-main_2\XLAS_Project-main_2\Emotion_VGG16_Optimized.h5"
 test_data_dir = r"C:\Users\PC\Downloads\XLAS_Project-main_2\XLAS_Project-main_2\dataset_new\test"
 
-# Đặt tên file giống anh ấy nhưng thêm chữ vgg16 để phân biệt
 save_test_history = "history_test_vgg16.json"
 save_confusion_matrix = "confusion_matrix_vgg16.txt"
 save_classification_report = "classification_report_vgg16.txt"
@@ -95,5 +93,6 @@ with open(save_classification_report, "w") as f:
     f.write(report)
 
 print("Saved classification report →", save_classification_report)
+
 
 print("\n=== TEST VGG16 DONE ✓ ===")
