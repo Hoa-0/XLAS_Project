@@ -1,9 +1,21 @@
+# ===== Core ML =====
 tensorflow==2.10.1
 keras==2.10.0
+numpy==1.23.5
+scipy==1.13.1
+scikit-learn==1.6.1
+h5py==3.14.0
+
+# ===== Image / CV =====
+opencv-python==4.12.0.88
+pillow==11.3.0
+matplotlib==3.9.4
+
+# ===== Streamlit Demo =====
 streamlit==1.22.0
-streamlit-webrtc==0.45.0
-opencv-python
-numpy
-pillow
-matplotlib
-scikit-learn
+streamlit-webrtc==0.43.4
+altair==4.2.2
+
+# ===== Utils =====
+pandas==2.3.3
+protobuf==3.19.6

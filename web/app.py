@@ -3,88 +3,71 @@ import sys
 import cv2
 import numpy as np
 import streamlit as st
+from PIL import Image
+import subprocess
 
-# ===============================
-# FIX IMPORT src/*
-# ===============================
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if ROOT_DIR not in sys.path:
-    sys.path.append(ROOT_DIR)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT_DIR)
 
 from src.predict_model import predict_emotion_multi
 
-# Webcam
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+st.set_page_config(page_title="FER Demo", layout="centered")
 
-# ===============================
-# PAGE CONFIG
-# ===============================
-st.set_page_config(
-    page_title="Facial Expression Recognition",
-    page_icon="😃",
-    layout="centered"
+st.title("😊 Facial Expression Recognition")
+
+model_name = st.selectbox(
+    "Select Model",
+    ["CNN", "VGG16"]
 )
 
-st.title("😃 Facial Expression Recognition")
-st.write("**Môn:** Xử lý ảnh số – Nhận dạng biểu cảm khuôn mặt (FER)")
+mode = st.radio(
+    "Select Mode",
+    ["📷 Upload Image", "🎥 Webcam (OpenCV)"]
+)
 
-# ===============================
-# TAB UI
-# ===============================
-tab1, tab2 = st.tabs(["📤 Upload ảnh", "📷 Realtime Webcam"])
-
-# ======================================================
-# TAB 1: UPLOAD IMAGE (NHIỀU KHUÔN MẶT)
-# ======================================================
-with tab1:
+if mode == "📷 Upload Image":
     uploaded = st.file_uploader(
-        "Upload ảnh khuôn mặt (jpg / png)",
+        "Upload image",
         type=["jpg", "png", "jpeg"]
     )
 
-    if uploaded is not None:
-        file_bytes = np.asarray(bytearray(uploaded.read()), dtype=np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    if uploaded:
+        image = Image.open(uploaded).convert("RGB")
+        img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
-        results, img_draw = predict_emotion_multi(img)
+        results = predict_emotion_multi(img, model_name)
 
-        st.image(img_draw, channels="BGR", caption="Kết quả nhận dạng")
-
-        if len(results) == 0:
-            st.warning("⚠️ Không phát hiện khuôn mặt nào")
+        # Nếu ảnh nhỏ → show text
+        if len(results) == 1 and results[0]["box"] is None:
+            st.image(image, use_column_width=True)
+            st.success(f"Prediction: **{results[0]['label']}**")
         else:
-            st.subheader("📊 Kết quả:")
-            for i, r in enumerate(results):
-                st.write(
-                    f"**Face {i+1}:** {r['label']} "
-                    f"(confidence = {r['confidence']:.2f})"
+            for r in results:
+                x, y, w, h = r["box"]
+                cv2.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
+                cv2.putText(
+                    img,
+                    r["label"],
+                    (x, y-10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.9,
+                    (0,255,0),
+                    2
                 )
 
-# ======================================================
-# TAB 2: REALTIME WEBCAM
-# ======================================================
-class FERVideoProcessor(VideoTransformerBase):
-    def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")
-        _, img_draw = predict_emotion_multi(img)
-        return img_draw
+            st.image(
+                cv2.cvtColor(img, cv2.COLOR_BGR2RGB),
+                caption=f"Detected {len(results)} face(s)",
+                use_column_width=True
+            )
 
+else:
+    st.warning("Webcam sẽ mở ở cửa sổ riêng")
 
-with tab2:
-    st.write("🎥 Nhận dạng biểu cảm khuôn mặt realtime")
+    if st.button("▶ Start Webcam"):
+        subprocess.Popen([
+            sys.executable,
+            os.path.join(ROOT_DIR, "src", "webcam_predict.py")
+        ])
 
-    webrtc_streamer(
-        key="fer-realtime",
-        video_transformer_factory=FERVideoProcessor,
-        media_stream_constraints={
-            "video": True,
-            "audio": False
-        },
-        async_transform=True
-    )
-
-# ===============================
-# FOOTER
-# ===============================
-st.markdown("---")
-st.caption("© 2025 – FER Project | CNN – LittleVGG | Streamlit")
+    st.info("Nhấn **Q** để tắt webcam")
